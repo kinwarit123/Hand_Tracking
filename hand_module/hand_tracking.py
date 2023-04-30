@@ -2,9 +2,27 @@ import cv2
 import mediapipe as mp
 import time
 
-mp_hands = mp.solutions.hands  # type: ignore
-mp_drawing = mp.solutions.drawing_utils  # type: ignore
-mp_drawing_styles = mp.solutions.drawing_styles  # type: ignore
+def num_count(x=1, y=2):
+    num = 0
+    if list(lmlist[4])[x] > list(lmlist[1])[x]:
+        num += 1
+    if list(lmlist[8])[y] < list(lmlist[6])[y]:
+        num += 1
+    if list(lmlist[12])[y] < list(lmlist[10])[y]:
+        num += 1
+    if list(lmlist[16])[y] < list(lmlist[14])[y]:
+        num += 1
+    if list(lmlist[20])[y] < list(lmlist[18])[y]:
+        num += 1
+    return num
+
+def putText(text, textposition):
+    cv2.putText(image, str(text), (textposition),
+                cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
+
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
 
 cap = cv2.VideoCapture(0)
 
@@ -28,23 +46,28 @@ with mp_hands.Hands(
 
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        lmlist = []
         
         if results.multi_hand_landmarks:
             for handlandmarks in results.multi_hand_landmarks:
-                for id, lm in enumerate(handlandmarks.landmark):
-                    h, w, c = image.shape
-                    cx, cy = int(lm.x * w), int(lm.y * h)
-                    #print(id, cx, cy)
-
                 mp_drawing.draw_landmarks(image,
                                           handlandmarks,
                                           mp_hands.HAND_CONNECTIONS)
+                
+        if results.multi_hand_landmarks:
+            myHand = results.multi_hand_landmarks[0]
+            for id, lm in enumerate(myHand.landmark):
+                h, w, c = image.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                lmlist.append([id, cx, cy])
+            if len(lmlist) != 0:
+                putText(num_count(), (5, 110))
 
         ctime = time.time()
         fps = str(int(1 / (ctime - ptime)))
         ptime = ctime
         cv2.putText(image, fps, (5, 40),
-                    cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 255), 3)
+                    cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
 
         cv2.imshow("Hand Tracking Frame", image)
 
