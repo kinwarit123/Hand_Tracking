@@ -4,20 +4,39 @@ import time
 
 def num_count(x=1, y=2):
     num = 0
-    if list(lmlist[4])[x] > list(lmlist[1])[x]:
-        num += 1
-    if list(lmlist[8])[y] < list(lmlist[6])[y]:
-        num += 1
-    if list(lmlist[12])[y] < list(lmlist[10])[y]:
-        num += 1
-    if list(lmlist[16])[y] < list(lmlist[14])[y]:
-        num += 1
-    if list(lmlist[20])[y] < list(lmlist[18])[y]:
-        num += 1
+    TopLms = [4, 8, 12, 16, 20]
+
+    if handCheck() == "right":
+        if lmlist[TopLms[0]][x] > lmlist[TopLms[0] - 2][x]:
+            num += 1
+    else:
+        if lmlist[TopLms[0]][x] < lmlist[TopLms[0] - 2][x]:
+            num += 1
+            
+    for fingerIndex in range(1,5):
+        if lmlist[TopLms[fingerIndex]][y] < lmlist[TopLms[fingerIndex] - 2][y]:
+            num += 1
     return num
 
-def putText(text, textposition):
-    cv2.putText(image, str(text), (textposition),
+def indexFingerDirection(x=1, y=2):
+    direction = ["UP", "RIGHT", "DOWN", "LEFT"]
+    if max(lmlist[0:][y]) == lmlist[8][y]:
+        return direction[0]
+    if min(lmlist[0:][x]) == lmlist[8][x]:
+        return direction[1]
+    if min(lmlist[0:][y]) == lmlist[8][y]:
+        return direction[2]
+    if max(lmlist[0:][x]) == lmlist[8][x]:
+        return direction[3]
+
+def handCheck(x=1, y=2):
+    if lmlist[3][x] > lmlist[17][x] and lmlist[5][x] > lmlist[13][x]:
+        return "right"
+    else:
+        return "left"
+
+def putText(text, textposition, addText=""):
+    cv2.putText(image, str(text) + str(addText), (textposition),
                 cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
 
 mp_hands = mp.solutions.hands
@@ -31,8 +50,8 @@ ctime = 0
 
 with mp_hands.Hands(
     model_complexity=0,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.7
 ) as hands:
     while cap.isOpened():
         success, image = cap.read()
@@ -61,7 +80,9 @@ with mp_hands.Hands(
                 cx, cy = int(lm.x * w), int(lm.y * h)
                 lmlist.append([id, cx, cy])
             if len(lmlist) != 0:
+                # putText(indexFingerDirection(), (5, 70))
                 putText(num_count(), (5, 110))
+                putText(handCheck(), (5, 150), addText=" Hand")
 
         ctime = time.time()
         fps = str(int(1 / (ctime - ptime)))
